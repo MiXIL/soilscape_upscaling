@@ -31,4 +31,6 @@ To run for a time series for different sites site-specific scripts have been dev
 
 ### SoilSCAPE - Tonzi ##
 
-Script and config file for running 
+Script and config file for running upscaling for Tonzi Ranch, California.
+
+Data are extracted from an SQLite or MySQL version of the SoilSCAPE database.
