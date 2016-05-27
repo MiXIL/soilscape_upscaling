@@ -53,16 +53,16 @@ def colour_sm_image(inimage, outimage, max_value=0.5, band=1):
         '''.format(band)
     elif max_value == 0.3:
         out_colour_table = '''
-            <rsgis:colour name="class_name_1" id="1"  band="{0}" lower="0" upper="3" red="165" green="0" blue="38" />
-            <rsgis:colour name="class_name_2" id="2"  band="{0}" lower="3" upper="6" red="215" green="48" blue="39" />
-            <rsgis:colour name="class_name_3" id="3"  band="{0}" lower="6" upper="9" red="244" green="109" blue="67" />
-            <rsgis:colour name="class_name_3" id="4"  band="{0}" lower="9" upper="12" red="253" green="174" blue="97" />
-            <rsgis:colour name="class_name_3" id="5"  band="{0}" lower="12" upper="15" red="254" green="224" blue="144" />
-            <rsgis:colour name="class_name_3" id="6"  band="{0}" lower="15" upper="18" red="224" green="243" blue="248" />
-            <rsgis:colour name="class_name_3" id="7"  band="{0}" lower="18" upper="21" red="171" green="217" blue="233" />
-            <rsgis:colour name="class_name_3" id="8"  band="{0}" lower="21" upper="24" red="116" green="173" blue="209" />
-            <rsgis:colour name="class_name_3" id="9"  band="{0}" lower="24" upper="27" red="69" green="117" blue="180" />
-            <rsgis:colour name="class_name_3" id="10" band="{0}" lower="27" upper="30" red="49" green="54" blue="149" />
+            <rsgis:colour name="class_name_1" id="1"  band="{0}" lower="0" upper="0.03" red="165" green="0" blue="38" />
+            <rsgis:colour name="class_name_2" id="2"  band="{0}" lower="0.03" upper="0.06" red="215" green="48" blue="39" />
+            <rsgis:colour name="class_name_3" id="3"  band="{0}" lower="0.06" upper="0.09" red="244" green="109" blue="67" />
+            <rsgis:colour name="class_name_3" id="4"  band="{0}" lower="0.09" upper="0.12" red="253" green="174" blue="97" />
+            <rsgis:colour name="class_name_3" id="5"  band="{0}" lower="0.12" upper="0.15" red="254" green="224" blue="144" />
+            <rsgis:colour name="class_name_3" id="6"  band="{0}" lower="0.15" upper="0.18" red="224" green="243" blue="248" />
+            <rsgis:colour name="class_name_3" id="7"  band="{0}" lower="0.18" upper="0.21" red="171" green="217" blue="233" />
+            <rsgis:colour name="class_name_3" id="8"  band="{0}" lower="0.21" upper="0.24" red="116" green="173" blue="209" />
+            <rsgis:colour name="class_name_3" id="9"  band="{0}" lower="0.24" upper="0.27" red="69" green="117" blue="180" />
+            <rsgis:colour name="class_name_3" id="10" band="{0}" lower="0.27" upper="0.30" red="49" green="54" blue="149" />
         '''.format(band)
     else:
         raise ValueError('Max value must be 0.5 or 0.3')
