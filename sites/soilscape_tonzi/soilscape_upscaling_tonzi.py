@@ -30,6 +30,14 @@ from soilscape_upscaling.data_extractors import soilscape_db_extractor
 
 MAX_SM_COL = 0.3
 
+def check_create_dir(in_dir_path):
+    """
+    Check a directory exists and create if it doesn't
+    """
+
+    if not os.path.isdir(in_dir_path):
+        os.makedirs(in_dir_path)
+
 def py2SQLiteTime(inTimePy):
     """ Converts Python time structure to string in the form:
         YYYY-MM-DD hh:mm:ss
@@ -58,6 +66,10 @@ def run_scaling(config_file, debugMode=False):
     outputStatsDIR = config['default']['out_stats_dir']
     outputCSVDIR = config['default']['out_csv_dir']
     outputImageDIR = config['default']['out_images_dir']
+
+    # Check all directories exist
+    for script_dir in [out_dir, outputStatsDIR, outputCSVDIR, outputImageDIR]:
+        check_create_dir(script_dir)
 
     # Check if an SQLite db has been provided
     # if not use MySQL
