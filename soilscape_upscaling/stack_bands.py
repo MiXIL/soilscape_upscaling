@@ -78,12 +78,23 @@ def make_stack(data_layers_list, out_dir, sm_date_ts, mask=None, bounding_box=No
     subprocess.check_call(vrt_cmd)
 
     # Warp so all layers are the same resolution and data type
-    gdalwarp_cmd = ['gdalwarp', '-overwrite',
-                    '-ot', 'Float32',
-                    '-of', 'KEA',
-                    '-t_srs', EASE2PROJ4,
-                    '-tr', str(UPSCALING_RES), str(UPSCALING_RES),
-                    out_vrt, out_raster]
+
+    if bounding_box is not None:
+        gdalwarp_cmd = ['gdalwarp', '-overwrite',
+                        '-ot', 'Float32',
+                        '-of', 'KEA']
+        gdalwarp_cmd.extend(['-te'])
+        gdalwarp_cmd.extend(bounding_box)
+        gdalwarp_cmd.extend(['-t_srs', EASE2PROJ4,
+                             '-tr', str(UPSCALING_RES), str(UPSCALING_RES),
+                             out_vrt, out_raster])
+    else:
+        gdalwarp_cmd = ['gdalwarp', '-overwrite',
+                        '-ot', 'Float32',
+                        '-of', 'KEA',
+                        '-t_srs', EASE2PROJ4,
+                        '-tr', str(UPSCALING_RES), str(UPSCALING_RES),
+                        out_vrt, out_raster]
     subprocess.check_call(gdalwarp_cmd)
 
     set_band_names(out_raster, band_names)
