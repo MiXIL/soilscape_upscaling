@@ -8,8 +8,9 @@ Functions for stacking bands
 
 """
 
-import subprocess
 import os
+import subprocess
+import time
 from osgeo import gdal
 from . import dynamic_layers
 from . import upscaling_common
@@ -65,7 +66,7 @@ def make_stack(data_layers_list, out_dir, sm_date_ts, mask=None, bounding_box=No
                                                                  bounding_box)
             if dynamic_path is not None:
                 data_layer.layer_path = dynamic_path
-                data_layer.layer_date = dynamic_date
+                data_layer.layer_date = time.strptime(dynamic_date, '%Y%m%d')
 
     # Extract list of band names and layer paths
     band_names = [layer.layer_name for layer in data_layers_list]
