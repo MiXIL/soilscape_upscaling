@@ -131,6 +131,11 @@ def run_scaling(config_file, debugMode=False):
     # Get a list of bandnames
     band_names = [layer.layer_name for layer in data_layers_list]
 
+    # Check there aren't any duplicates
+    if len(band_names) != len(set(band_names)):
+        raise ValueError('Each band must have a unique name:\n'
+                         '{}\n were provided'.format(', '.join(band_names)))
+
     # If there is a band called 'airmoss_hh' using AirMOSS
     # if there isn't aren't
     useAirMOSS = 'airmoss_hh' in band_names
