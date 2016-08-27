@@ -40,12 +40,19 @@ def get_reprojected_dynamic_layer(layer_type, layer_dir, sm_date_ts, temp_dir,
     * Path to reprojected layer and date of dynamic layer (string)
 
     """
+    # Get resampling method for layer type
+    if layer_type.startswith('airmoss'):
+        resample_method = 'average'
+    if layer_type.startswith('prism'):
+        resample_method = 'bilinear'
+
     # Get original file
     orig_layer, file_date = get_dynamic_layer(layer_type, layer_dir, sm_date_ts)
     
     # Subset using GDAL
     out_layer = os.path.join(temp_dir, '{}_subset.kea'.format(layer_type))
     gdal_warp_cmd = ['gdalwarp',
+                     '-r', resample_method,
                      '-of', 'KEA']
     if bounding_box is not None:
         gdal_warp_cmd.extend(['-te'])
@@ -72,7 +79,7 @@ def get_dynamic_layer(layer_type, layer_dir, sm_date_ts):
 
     * Path to layer and date of dynamic layer (string)
 
-     """
+    """
     # AirMOSS
     if layer_type.startswith('airmoss'):
         polarization = layer_type.split('_')[-1]
