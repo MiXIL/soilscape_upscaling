@@ -146,7 +146,7 @@ def run_scaling(config_file, debugMode=False):
         endTS = time.gmtime(endIntervalTimeEpoch)
     
         # Create temp DIR
-        tempDIR = tempfile.mkdtemp()
+        tempDIR = tempfile.mkdtemp(prefix='soilscape_upscaling')
         dateStr = time.strftime('%Y%m%d',startTS)
         outBaseName = dateStr
         

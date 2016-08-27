@@ -66,19 +66,19 @@ class SoilSCAPECreateCSVfromDB(object):
         calCoeff = {}
         calCoeff['type'] = 'linear'
         calCoeff['s1Coeff0'] = -40.1
-        calCoeff['s1Coeff1'] = 0.1279569 
+        calCoeff['s1Coeff1'] = 0.1279569
         calCoeff['s1Coeff2'] = 0
         calCoeff['s1Coeff3'] = 0
         calCoeff['s2Coeff0'] = -40.1
-        calCoeff['s2Coeff1'] = 0.1279569 
+        calCoeff['s2Coeff1'] = 0.1279569
         calCoeff['s2Coeff2'] = 0
         calCoeff['s2Coeff3'] = 0
         calCoeff['s3Coeff0'] = -40.1
-        calCoeff['s3Coeff1'] = 0.1279569 
+        calCoeff['s3Coeff1'] = 0.1279569
         calCoeff['s3Coeff2'] = 0
         calCoeff['s3Coeff3'] = 0
         calCoeff['s4Coeff0'] = -40.1
-        calCoeff['s4Coeff1'] = 0.1279569 
+        calCoeff['s4Coeff1'] = 0.1279569
         calCoeff['s4Coeff2'] = 0
         calCoeff['s4Coeff3'] = 0
 
@@ -96,9 +96,9 @@ class SoilSCAPECreateCSVfromDB(object):
             cursor = self.sensordb.cursor()
         else:
             cursor = self.sensordb.cursor(buffered=True)
-            
+
         # Select calibration coefficients from database
-        sqlCommand = '''SELECT s1CalType, s1Coeff0, s1Coeff1,s1Coeff2,s1Coeff3, 
+        sqlCommand = '''SELECT s1CalType, s1Coeff0, s1Coeff1,s1Coeff2,s1Coeff3,
                         s2Coeff0, s2Coeff1, s2Coeff2, s2Coeff3,
                         s3Coeff0, s3Coeff1, s3Coeff2, s3Coeff3,
                         s4Coeff0, s4Coeff1, s4Coeff2, s4Coeff3
@@ -125,13 +125,13 @@ class SoilSCAPECreateCSVfromDB(object):
             self.calCoeff['s4Coeff1'] = calData[0][14]
             self.calCoeff['s4Coeff2'] = calData[0][15]
             self.calCoeff['s4Coeff3'] = calData[0][16]
-            
+
             foundCal = True
 
         return foundCal
 
     def calData(self, raw1=None, raw2=None, raw3=None, raw4=None):
-        
+
         """ Calibrate raw data using stored coefficients """
 
         cal1=None
@@ -172,7 +172,7 @@ class SoilSCAPECreateCSVfromDB(object):
                 cal4 = numpy.where(raw4 < rawSplit,
                                    self.calCoeff['s4Coeff0'] + self.calCoeff['s4Coeff1'] * raw4,
                                    self.calCoeff['s4Coeff2'] + self.calCoeff['s4Coeff3'] * raw4)
-      
+
         # Second order polynomial
         elif self.calCoeff['type'] == 'poly2':
 
@@ -194,15 +194,14 @@ class SoilSCAPECreateCSVfromDB(object):
 
         Measurements are extracted for all sensors but only the required
         sensor is returned.
-
         """
-        
+
         if self.useSQLite:
             cursor = self.sensordb.cursor()
         else:
             cursor = self.sensordb.cursor(buffered=True)
 
-        smData = {} 
+        smData = {}
         if self.useSQLite:
             startTimeDB = startTime
             endTimeDB = endTime
@@ -216,10 +215,10 @@ class SoilSCAPECreateCSVfromDB(object):
 
         # Select data from table
         orderStr = "ORDER BY measTStime ASC"
-        sqlCommand = '''SELECT * FROM `Measurements` JOIN `MeasurementControl` ON (Measurements.MeasurementID=MeasurementControl.MeasurementID) 
-JOIN `LogicalLocation` ON (Measurements.LogicalID=LogicalLocation.LogicalID) 
-JOIN `PhysicalLocation` ON (Measurements.PhysicalID=PhysicalLocation.PhysicalID) 
-JOIN `MeasurementScheme` ON (Measurements.MeasurementSchemeID=MeasurementScheme.MeasurementSchemeID) 
+        sqlCommand = '''SELECT * FROM `Measurements` JOIN `MeasurementControl` ON (Measurements.MeasurementID=MeasurementControl.MeasurementID)
+JOIN `LogicalLocation` ON (Measurements.LogicalID=LogicalLocation.LogicalID)
+JOIN `PhysicalLocation` ON (Measurements.PhysicalID=PhysicalLocation.PhysicalID)
+JOIN `MeasurementScheme` ON (Measurements.MeasurementSchemeID=MeasurementScheme.MeasurementSchemeID)
 WHERE Measurements.PhysicalID=%s AND badData = 0 AND measTStime > '%s' AND measTStime < '%s' '''%(physicalID, startTimeDB, endTimeDB) + orderStr + ';'
 
         cursor.execute(sqlCommand)
@@ -241,7 +240,7 @@ WHERE Measurements.PhysicalID=%s AND badData = 0 AND measTStime > '%s' AND measT
 
         for line in outData:
             dataNP.append(line)
-            
+
         dataNP = numpy.array(outData)
         # Get position (common for all nodes)
         latitude = dataNP[0][36]
@@ -273,9 +272,28 @@ WHERE Measurements.PhysicalID=%s AND badData = 0 AND measTStime > '%s' AND measT
         s2Calib = s2Calib[s2Calib > 0]
         s3Calib = s3Calib[s3Calib > 0]
 
-        s1CalibAvg = numpy.average(s1Calib)
-        s2CalibAvg = numpy.average(s2Calib)
-        s3CalibAvg = numpy.average(s3Calib)
+        s1Calib = s1Calib[s1Calib < 60]
+        s2Calib = s2Calib[s2Calib < 60]
+        s3Calib = s3Calib[s3Calib < 60]
+
+        # Check is there are any remaining samples before
+        # writing calculating mean.
+        # Average of an empty array is NaN anyway but this
+        # avoids error message.
+        if s1Calib.shape[0] > 0:
+            s1CalibAvg = numpy.nanmean(s1Calib)
+        else:
+            s1CalibAvg = numpy.nan
+
+        if s2Calib.shape[0] > 0:
+            s2CalibAvg = numpy.nanmean(s2Calib)
+        else:
+            s2CalibAvg = numpy.nan
+
+        if s3Calib.shape[0] > 0:
+            s3CalibAvg = numpy.nanmean(s3Calib)
+        else:
+            s3CalibAvg = numpy.nan
 
         # Only write the required sensor out to CSV file
         # Scale to get in m3/m3
@@ -288,8 +306,12 @@ WHERE Measurements.PhysicalID=%s AND badData = 0 AND measTStime > '%s' AND measT
         else:
             raise Exception("Sensor number not recognised")
 
+        # Only return outline if there are sensor measurements.
+        if numpy.isnan(outSensorCal):
+            raise Exception("No valid data found for {}.".format(physicalID))
+
         outLine = [physicalID, latitude, longitude, outSensorCal]
-        
+
         return outLine
 
     def createCSVFromDB(self, physicaIDsList, outDataFile, startDateTimeStr, endDateTimeStr):
@@ -310,5 +332,5 @@ WHERE Measurements.PhysicalID=%s AND badData = 0 AND measTStime > '%s' AND measT
                     print(err)
                 else:
                     pass
-        return(outRecords)
+        return outRecords
 
