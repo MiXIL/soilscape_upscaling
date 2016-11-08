@@ -15,7 +15,7 @@ from osgeo import gdal
 from . import dynamic_layers
 from . import upscaling_common
 
-EASE2PROJ4 = upscaling_common.EASE2PROJ4
+UPSCALING_PROJ = upscaling_common.EASE2PROJ4
 UPSCALING_RES = upscaling_common.UPSCALING_RES
 
 def set_band_names(input_image, band_names_list, print_names=False):
@@ -44,7 +44,9 @@ def set_band_names(input_image, band_names_list, print_names=False):
 
     dataset = None
 
-def make_stack(data_layers_list, out_dir, sm_date_ts, mask=None, bounding_box=None):
+def make_stack(data_layers_list, out_dir, sm_date_ts=None, mask=None,
+               bounding_box=None, out_res=UPSCALING_RES,
+               out_proj=UPSCALING_PROJ):
     """
     Makes a stack of all bands to be used in the upscaling.
 
@@ -58,6 +60,9 @@ def make_stack(data_layers_list, out_dir, sm_date_ts, mask=None, bounding_box=No
         # For dynamic layers check we have the path
         # if we don't find and subset the layer
         if data_layer.layer_type == 'dynamic' and data_layer.layer_path is None:
+            if sm_date_ts is None:
+                raise Exception('Dynamic layers were specified but no date'
+                                'was provided')
             dynamic_path, dynamic_date = \
                     dynamic_layers.get_reprojected_dynamic_layer(data_layer.layer_name,
                                                                  data_layer.layer_dir,
@@ -86,15 +91,15 @@ def make_stack(data_layers_list, out_dir, sm_date_ts, mask=None, bounding_box=No
                         '-of', 'KEA']
         gdalwarp_cmd.extend(['-te'])
         gdalwarp_cmd.extend(bounding_box)
-        gdalwarp_cmd.extend(['-t_srs', EASE2PROJ4,
-                             '-tr', str(UPSCALING_RES), str(UPSCALING_RES),
+        gdalwarp_cmd.extend(['-t_srs', out_proj,
+                             '-tr', str(out_res), str(out_res),
                              out_vrt, out_raster])
     else:
         gdalwarp_cmd = ['gdalwarp', '-overwrite',
                         '-ot', 'Float32',
                         '-of', 'KEA',
-                        '-t_srs', EASE2PROJ4,
-                        '-tr', str(UPSCALING_RES), str(UPSCALING_RES),
+                        '-t_srs', out_proj,
+                        '-tr', str(out_res), str(out_res),
                         out_vrt, out_raster]
     subprocess.check_call(gdalwarp_cmd)
 
