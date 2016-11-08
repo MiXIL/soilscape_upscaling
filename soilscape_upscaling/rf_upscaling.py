@@ -15,6 +15,8 @@ from sklearn.ensemble import RandomForestRegressor
 from rios import applier
 from rios import cuiprogress
 
+from . import upscaling_utilities
+
 def array2table(in_array):
     """
     Takes multi-band image (represented as a 3-dimensional
@@ -99,7 +101,7 @@ def apply_rf_image(in_data_stack, out_image, rf_model, nodata_vals):
     # Pass in list of no data values for each layer
     otherargs.nodata_vals_list = nodata_vals
     controls = applier.ApplierControls()
-    controls.setOutputDriverName('KEA')
+    controls.setOutputDriverName(upscaling_utilities.get_gdal_format(out_image))
     controls.progress = cuiprogress.CUIProgressBar()
     applier.apply(_rios_apply_rf_image, infiles, outfiles,
                   otherargs, controls=controls)
