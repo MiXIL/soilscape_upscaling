@@ -11,11 +11,11 @@ import subprocess
 import os
 import tempfile as tempfile
 
-def _getGDALFormat(fileName):
+def get_gdal_format(file_name):
     """ Get GDAL format, based on filename """
     gdalStr = ''
-    extension = os.path.splitext(fileName)[-1]
-    if extension == '.env':
+    extension = os.path.splitext(file_name)[-1].lower()
+    if extension in ['.env', '.bil', '.bsq']:
         gdalStr = 'ENVI'
     elif extension == '.kea':
         gdalStr = 'KEA'
@@ -25,9 +25,8 @@ def _getGDALFormat(fileName):
         gdalStr = 'HFA'
     else:
         raise Exception('Type not recognised')
-    
-    return gdalStr
 
+    return gdalStr
 
 def colour_sm_image(inimage, outimage, max_value=0.5, band=1):
     """
@@ -36,7 +35,7 @@ def colour_sm_image(inimage, outimage, max_value=0.5, band=1):
     FIXME: This function should be tidied up possibly to use
     """
 
-    gdalFormat = _getGDALFormat(outimage)
+    gdalFormat = get_gdal_format(outimage)
 
     if max_value == 0.5:
         out_colour_table = '''

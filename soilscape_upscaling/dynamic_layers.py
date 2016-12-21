@@ -18,11 +18,13 @@ from . import upscaling_common
 #: Minimum time difference between date and AirMOSS scene
 MIN_TIME_DIFF_AIRMOSS = 1e10
 
-EASE2PROJ4 = upscaling_common.EASE2PROJ4
+UPSCALING_PROJ = upscaling_common.EASE2PROJ4
 UPSCALING_RES = upscaling_common.UPSCALING_RES
 
 def get_reprojected_dynamic_layer(layer_type, layer_dir, sm_date_ts, temp_dir,
-                                  bounding_box=None):
+                                  bounding_box=None,
+                                  out_res=UPSCALING_RES,
+                                  out_proj=UPSCALING_PROJ):
     """
     Gets dynamic layer then subsets and reprojects, optionally cropping to
     bounding box.
@@ -48,7 +50,7 @@ def get_reprojected_dynamic_layer(layer_type, layer_dir, sm_date_ts, temp_dir,
 
     # Get original file
     orig_layer, file_date = get_dynamic_layer(layer_type, layer_dir, sm_date_ts)
-    
+
     # Subset using GDAL
     out_layer = os.path.join(temp_dir, '{}_subset.kea'.format(layer_type))
     gdal_warp_cmd = ['gdalwarp',
@@ -57,9 +59,9 @@ def get_reprojected_dynamic_layer(layer_type, layer_dir, sm_date_ts, temp_dir,
     if bounding_box is not None:
         gdal_warp_cmd.extend(['-te'])
         gdal_warp_cmd.extend(bounding_box)
-    gdal_warp_cmd.extend(['-tr', str(UPSCALING_RES), str(UPSCALING_RES),
+    gdal_warp_cmd.extend(['-tr', str(out_res), str(out_res),
                           '-dstnodata', '0',
-                          '-t_srs', EASE2PROJ4,
+                          '-t_srs', out_proj,
                           orig_layer, out_layer])
     subprocess.check_call(gdal_warp_cmd)
 
