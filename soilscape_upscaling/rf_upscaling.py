@@ -18,6 +18,9 @@ from rios import cuiprogress
 
 from . import upscaling_utilities
 
+# Value to change nodata pixels to.
+NAN_NODATA_VALUE = -9999
+
 def array2table(in_array):
     """
     Takes multi-band image (represented as a 3-dimensional
@@ -49,6 +52,8 @@ def _rios_apply_rf_image(info, inputs, outputs, otherargs):
     # Flatten array to table
     test_data = array2table(inputs.inimage[0:, ...])
 
+    test_data[numpy.isnan(test_data)] = NAN_NODATA_VALUE
+
     predict_sm = otherargs.rf.predict(test_data[:, :-1])
 
     # Mask out no data values for each band.
@@ -57,6 +62,9 @@ def _rios_apply_rf_image(info, inputs, outputs, otherargs):
         if nodata_val is not None:
             predict_sm = numpy.where(test_data[:, i] == nodata_val,
                                      0, predict_sm)
+        # Check for no data value we've set
+        predict_sm = numpy.where(test_data[:, i] == NAN_NODATA_VALUE,
+                                 0, predict_sm)
 
     # Reshape
     out_predict_sm = predict_sm.reshape((1, inputs.inimage.shape[1], inputs.inimage.shape[2]))

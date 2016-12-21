@@ -1,18 +1,20 @@
 #!/usr/bin/env python
+"""
+Class to extract data from TxSON network
+for use in upscaling algorithm
 
-################################################################
-# Python script to create CSV from soil moisture measurements  #
-# Dan Clewley (daniel.clewley@gmail.com), 27/08/2012           #
-#                                                              #
-# Modified 11/11/2013 to use sqlite                            #
-################################################################
+Dan Clewley & Jane Whitcomb
+
+"""
+
+
 
 import csv
+import calendar
 import os
-#import re
-import numpy as np
-import time,calendar
-from pandas.io.parsers import read_csv
+import time
+import numpy
+import pandas
 
 class SoilSCAPECreateCSVfromTxSON(object):
     """
@@ -21,17 +23,16 @@ class SoilSCAPECreateCSVfromTxSON(object):
     Extracts data from TxSON .dat files.
 
     """
-    def __init__(self, siteIDsList ,outSensorNum=1, debugMode=False):
+    def __init__(self, siteIDsList, txsondir, outSensorNum=1, debugMode=False):
 
         self.siteIDsList = siteIDsList
         self.outSensorNum = outSensorNum
         self.debugMode = debugMode
 
-        txsondir = '/media/Data/SoilSCAPE/Scaling/DataLayers/TxSON/'     
         self.txsondir = txsondir
 
         #Set up site information:
-        sites = read_csv(txsondir+'sites_noblanks.csv')
+        sites = pandas.read_csv(os.path.join(self.txsondir, 'sites_noblanks.csv'))
         allsiteIDs = sites.SiteID
 
         loggerID = {}
@@ -71,7 +72,7 @@ class SoilSCAPECreateCSVfromTxSON(object):
         sitebase = self.loggerID[siteIDstr].replace('-','_')
         sitefile = self.txsondir+sitebase+'.dat'
         
-        sitedata = read_csv(sitefile,sep=',\s+')
+        sitedata = pandas.read_csv(sitefile,sep=',\s+', engine='python')
         if len(sitedata) == 0:
             raise Exception("No data found for Site {} (at all, any sensors) for selected date".format(loggerID[siteIDstr]))  
   
@@ -96,12 +97,12 @@ class SoilSCAPECreateCSVfromTxSON(object):
         if (len(sensorMeas) == 0):
             raise Exception("No data found for Site {}, sensor {} for selected date".format(siteIDstr,self.outSensorNum))
 
-        sensorMeas = np.array(sensorMeas)
+        sensorMeas = numpy.array(sensorMeas)
         sensorMeas = sensorMeas[sensorMeas > 0]
         sensorMeas = sensorMeas[sensorMeas < 0.50]
-        sensorAvg = np.nanmean(sensorMeas)
+        sensorAvg = numpy.nanmean(sensorMeas)
 
-        if (np.isfinite(sensorAvg) == False):
+        if (numpy.isfinite(sensorAvg) == False):
             raise Exception("Non-finite data found for Site {}, sensor {} for selected date".format(siteIDstr,self.outSensorNum))
         outSensorCal = sensorAvg
 

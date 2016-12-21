@@ -1,15 +1,12 @@
 #!/usr/bin/env python
+"""
+Script to run the SoilSCAPE upscaling procedure for data from the
+TxSON network.
 
-# soilscape_scaling.py
-# A script to extract soil moisture measurements
-# from SoilSCAPE database and run Random Forests
-# to predict for cells within a 36 km grid
-#
-# Daniel Clewley (clewley@usc.edu)
-# 06/03/2014
-#
-# Adapted to make use of 'soilscape_upscaling' library
-# 11/05/2016
+Jane Whitcomb (jbwhitco@usc.edu) 2016
+
+Modified from script for SoilSCAPE network in Tonzi (Dan Clewley)
+"""
 
 import argparse
 import calendar
@@ -22,15 +19,13 @@ import tempfile
 import time
 import shutil
 import numpy
-from numpy import random
-from pandas.io.parsers import read_csv
+import pandas
 
 from soilscape_upscaling import upscaling_common
-from soilscape_upscaling import stack_bands_bb as stack_bands
+from soilscape_upscaling import stack_bands
 from soilscape_upscaling import extract_image_stats
 from soilscape_upscaling import rf_upscaling
 from soilscape_upscaling import upscaling_utilities
-#from soilscape_upscaling.data_extractors import soilscape_db_extractor
 from soilscape_upscaling.data_extractors import txson_extractor
 
 MAX_SM_COL = 0.4
@@ -57,28 +52,23 @@ def run_scaling(outfolder, config_file, debugMode=False):
 
     createColImage = True
 
-    outputsdir = '/media/Data/SoilSCAPE/Scaling/Outputs/'
-    out_dir = outputsdir+outfolder
-    outputStatsDIR = out_dir+'/Stats'
-    outputCSVDIR = out_dir+'/CSV'
-    outputImageDIR = out_dir+'/Images'
-    outputPlotsDIR = out_dir+'/Plots'
+    out_dir = os.path.join(config['default']['outdir'], outfolder)
+    outputStatsDIR = os.path.join(out_dir, 'Stats')
+    outputCSVDIR = os.path.join(out_dir, 'CSV')
+    outputImageDIR = os.path.join(out_dir, 'Images')
+    outputPlotsDIR = os.path.join(out_dir, 'Plots')
 
     if os.path.isdir(out_dir):
         print('Output directory {0} already exists'.format(out_dir))
     else:
-        os.mkdir(out_dir)
-        os.mkdir(outputStatsDIR)
-        os.mkdir(outputCSVDIR)
-        os.mkdir(outputImageDIR)
-        os.mkdir(outputPlotsDIR)
+        os.makedirs(out_dir)
+        os.makedirs(outputStatsDIR)
+        os.makedirs(outputCSVDIR)
+        os.makedirs(outputImageDIR)
+        os.makedirs(outputPlotsDIR)
 
-    # Check if an SQLite db has been provided
-    # if not use MySQL
-    try:
-        inSQLite = config['default']['sqlite_db']
-    except KeyError:
-        inSQLite = None
+    # Get sensor data directory
+    sensor_data_dir = config['default']['sensor_data_dir']
 
     # Get start and end time
     starttime_str = config['default']['starttime']
@@ -108,7 +98,7 @@ def run_scaling(outfolder, config_file, debugMode=False):
     validIDsList = siteIDsList.copy()
 
     while len(nodeIDsList) < numnodes:
-        node = random.choice(siteIDsList)
+        node = numpy.random.choice(siteIDsList)
         if (node not in nodeIDsList):
             nodeIDsList.append(node)
             validIDsList.remove(node)     
@@ -118,10 +108,12 @@ def run_scaling(outfolder, config_file, debugMode=False):
     # Which sensor in the vertical stack of sensors at each site (e.g., sensor 1 is at 5 cm depth):
     sensorNum = int(config['default']['sensor_number']) 
 
-    csv_extractor = txson_extractor.SoilSCAPECreateCSVfromTxSON(nodeIDsList, outSensorNum=sensorNum,
-                                                                    debugMode=debugMode)
-    valid_extractor = txson_extractor.SoilSCAPECreateCSVfromTxSON(validIDsList, outSensorNum=sensorNum,
-                                                                    debugMode=debugMode)
+    csv_extractor = txson_extractor.SoilSCAPECreateCSVfromTxSON(nodeIDsList, sensor_data_dir,
+                                                                outSensorNum=sensorNum,
+                                                                debugMode=debugMode)
+    valid_extractor = txson_extractor.SoilSCAPECreateCSVfromTxSON(validIDsList, sensor_data_dir,
+                                                                  outSensorNum=sensorNum,
+                                                                  debugMode=debugMode)
 
     # Geographic region to be included in the data layer stack:
     bounding_box = config['default']['bounding_box'].split()
@@ -173,15 +165,15 @@ def run_scaling(outfolder, config_file, debugMode=False):
         # Create temp DIR
         tempDIR = tempfile.mkdtemp()
         dateStr = time.strftime('%Y%m%d',startTS)
-        print('date: ',dateStr)
         outBaseName = dateStr
         
         # Extract CSV from dB
         nodeDataCSV = os.path.join(tempDIR, "{}_node_data.csv".format(outBaseName))
 
         nOutRecords = csv_extractor.createCSVFromTxSON(nodeDataCSV,startTS,endTS)
-        print('noutrec: ',nOutRecords)
         if nOutRecords >= 10:
+            print('date: ',dateStr)
+            print('noutrec: ',nOutRecords)
             try:
                 print("***** {} *****".format(dateStr))
 
@@ -194,12 +186,10 @@ def run_scaling(outfolder, config_file, debugMode=False):
                 
                 # Create band stack 
                 data_stack = stack_bands.make_stack(data_layers_list, tempDIR,
-                                                    startTS, bounding_box=bounding_box, upscaling_res=upscaling_res, dyn_resampling=dyn_resampling)
+                                                    startTS, bounding_box=bounding_box, out_res=upscaling_res)
 
+                # Don't need this for TxSON
                 airmossDateStr = "NA"
-                for layer in data_layers_list:
-                    if layer.layer_name == 'airmoss_hh':
-                        airmossDateStr = time.strftime('%Y%m%d', layer.layer_date)
 
                 # Extract pixel vals
                 statscsv = os.path.join(outputCSVDIR, outBaseName + '_sensor_data.csv')
@@ -216,7 +206,7 @@ def run_scaling(outfolder, config_file, debugMode=False):
                 nValidRecords = valid_extractor.createCSVFromTxSON(validDataCSV,startTS,endTS)
                 print('nvalidrec: ',nValidRecords)
 
-                validdata = read_csv(validDataCSV)
+                validdata = pandas.read_csv(validDataCSV)
                 validSMs = validdata.sensorData
                 if (len(validSMs) == 0):
                     raise Exception('No valid training data found')
@@ -269,7 +259,8 @@ if __name__ == '__main__':
 
     # Get input parameters
     parser = argparse.ArgumentParser(description="Run SoilSCAPE Scaling function over "
-                                                 "a time series of data.")
+                                                 "a time series of data for the TxSON "
+                                                 "site")
 
     parser.add_argument("outfolder", 
                         type=str,
