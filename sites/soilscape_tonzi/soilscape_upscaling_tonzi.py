@@ -101,7 +101,11 @@ def run_scaling(config_file, debugMode=False):
     sensorNum = int(config['default']['sensor_number']) 
 
     bounding_box = config['default']['bounding_box'].split()
- 
+
+    try:
+        upscaling_model = config['default']['upscaling_model']
+    except KeyError:
+        upscaling_model = "RandomForestRegressor"
 
     # Set start and end time
     starttimeEpoch = calendar.timegm(starttime)
@@ -191,7 +195,8 @@ def run_scaling(config_file, debugMode=False):
                 outSMColimage = os.path.join(outputImageDIR, outBaseName + '_predict_sm_col.tif')
     
                 rfPar = rf_upscaling.run_random_forests(statscsv, data_stack,
-                                                        outSMimage, data_layers_list)
+                                                        outSMimage, data_layers_list,
+                                                        upscaling_model=upscaling_model)
         
                 # Write out stats
                 outRow = [outBaseName,

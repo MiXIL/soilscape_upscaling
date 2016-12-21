@@ -12,6 +12,7 @@ to an image.
 import pandas
 import numpy
 from sklearn.ensemble import RandomForestRegressor
+from sklearn import linear_model
 from rios import applier
 from rios import cuiprogress
 
@@ -70,7 +71,8 @@ def _rios_apply_rf_image(info, inputs, outputs, otherargs):
     else:
         otherargs.predict_sm = numpy.append(otherargs.predict_sm, predict_sm)
 
-def run_random_forests(in_train_csv, in_data_stack, out_image, data_layers_list, train_data_col=3):
+def run_random_forests(in_train_csv, in_data_stack, out_image, data_layers_list,
+                       train_data_col=3, upscaling_model="RandomForestRegressor"):
     """
     Train random forests using a text file and apply to an image.
     
@@ -123,19 +125,29 @@ def run_random_forests(in_train_csv, in_data_stack, out_image, data_layers_list,
         raise Exception('No valid training data found')
 
     # Train Random Forest
-    rf = RandomForestRegressor(n_estimators=300, max_features=3, oob_score=True,
-                               verbose=0, n_jobs=4, random_state=17)
-
+    if upscaling_model == "RandomForestRegressor":
+        rf = RandomForestRegressor(n_estimators=300, max_features=3, oob_score=True,
+                                   verbose=0, n_jobs=4, random_state=17)
+    elif upscaling_model == "LinearRegression":
+        rf = linear_model.LinearRegression()
+    else:
+        raise NotImplementedError("The model '' is not recognised or available"
+                                  "".format(upscaling_model))
     # Fit RF
     rf.fit(X_train, y_train)
 
     r_sqr = rf.score(X_train, y_train)
-    rmse = numpy.sqrt(((rf.oob_prediction_ - y_train)**2).mean())
-    bias = (rf.oob_prediction_ - y_train).mean()
+    if upscaling_model == "RandomForestRegressor":
+        rmse = numpy.sqrt(((rf.oob_prediction_ - y_train)**2).mean())
+        bias = (rf.oob_prediction_ - y_train).mean()
+        var_importance = rf.feature_importances_
+    else:
+        rmse = numpy.nan
+        bias = numpy.nan
+        var_importance = []
 
     # Save random forest variables
     num_samples = y_train.shape[0]
-    var_importance = rf.feature_importances_
     average_sm_train = y_train.mean()
     sd_sm_train = y_train.std()
 
