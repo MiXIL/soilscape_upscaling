@@ -18,8 +18,17 @@ from . import upscaling_common
 #: Minimum time difference between date and AirMOSS scene
 MIN_TIME_DIFF_AIRMOSS = 1e10
 
-UPSCALING_PROJ = upscaling_common.EASE2PROJ4
+UPSCALING_PROJ = upscaling_common.UPSCALING_PROJ
 UPSCALING_RES = upscaling_common.UPSCALING_RES
+GDAL_FORMAT = upscaling_common.UPSCALING_GDAL_FORMAT
+GDAL_EXT = "kea"
+
+if GDAL_FORMAT == "ENVI":
+    GDAL_EXT = "bsq"
+elif GDAL_FORMAT == "GTiff":
+    GDAL_EXT = "tif"
+else:
+    GDAL_EXT = GDAL_FORMAT.lower()
 
 def get_reprojected_dynamic_layer(layer_type, layer_dir, sm_date_ts, temp_dir,
                                   bounding_box=None,
@@ -52,10 +61,10 @@ def get_reprojected_dynamic_layer(layer_type, layer_dir, sm_date_ts, temp_dir,
     orig_layer, file_date = get_dynamic_layer(layer_type, layer_dir, sm_date_ts)
 
     # Subset using GDAL
-    out_layer = os.path.join(temp_dir, '{}_subset.kea'.format(layer_type))
+    out_layer = os.path.join(temp_dir, '{}_subset.{}'.format(layer_type, GDAL_EXT))
     gdal_warp_cmd = ['gdalwarp',
                      '-r', resample_method,
-                     '-of', 'KEA']
+                     '-of', GDAL_FORMAT]
     if bounding_box is not None:
         gdal_warp_cmd.extend(['-te'])
         gdal_warp_cmd.extend(bounding_box)

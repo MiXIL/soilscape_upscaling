@@ -15,8 +15,19 @@ from osgeo import gdal
 from . import dynamic_layers
 from . import upscaling_common
 
-UPSCALING_PROJ = upscaling_common.EASE2PROJ4
+UPSCALING_PROJ = upscaling_common.UPSCALING_PROJ
 UPSCALING_RES = upscaling_common.UPSCALING_RES
+GDAL_FORMAT = upscaling_common.UPSCALING_GDAL_FORMAT
+
+GDAL_EXT = "kea"
+
+if GDAL_FORMAT == "ENVI":
+    GDAL_EXT = "bsq"
+elif GDAL_FORMAT == "GTiff":
+    GDAL_EXT = "tif"
+else:
+    GDAL_EXT = GDAL_FORMAT.lower()
+
 
 def set_band_names(input_image, band_names_list, print_names=False):
     """
@@ -54,7 +65,7 @@ def make_stack(data_layers_list, out_dir, sm_date_ts=None, mask=None,
     """
 
     out_vrt = os.path.join(out_dir, 'upscaling_layers_stack.vrt')
-    out_raster = os.path.join(out_dir, 'upscaling_layers_stack_ease.kea')
+    out_raster = os.path.join(out_dir, 'upscaling_layers_stack_ease.{}'.format(GDAL_EXT))
 
     for data_layer in data_layers_list:
         # For dynamic layers check we have the path
@@ -88,7 +99,7 @@ def make_stack(data_layers_list, out_dir, sm_date_ts=None, mask=None,
     if bounding_box is not None:
         gdalwarp_cmd = ['gdalwarp', '-overwrite',
                         '-ot', 'Float32',
-                        '-of', 'KEA']
+                        '-of', GDAL_FORMAT]
         gdalwarp_cmd.extend(['-te'])
         gdalwarp_cmd.extend(bounding_box)
         gdalwarp_cmd.extend(['-t_srs', out_proj,
@@ -97,7 +108,7 @@ def make_stack(data_layers_list, out_dir, sm_date_ts=None, mask=None,
     else:
         gdalwarp_cmd = ['gdalwarp', '-overwrite',
                         '-ot', 'Float32',
-                        '-of', 'KEA',
+                        '-of', GDAL_FORMAT,
                         '-t_srs', out_proj,
                         '-tr', str(out_res), str(out_res),
                         out_vrt, out_raster]

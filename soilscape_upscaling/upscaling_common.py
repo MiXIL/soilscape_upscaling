@@ -8,12 +8,33 @@ Common functions and constants.
 """
 
 import time
+import os
 
 #: Proj4 string for EASE-2 projection
-EASE2PROJ4 = '+proj=cea +lat_0=0 +lon_0=0 +lat_ts=30 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m'
+UPSCALING_PROJ = '+proj=cea +lat_0=0 +lon_0=0 +lat_ts=30 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m'
 
 #: Resolution to use for upscaling
 UPSCALING_RES = 100
+
+#: GDAL format to use
+UPSCALING_GDAL_FORMAT = "KEA"
+
+# go through all variables and check if they should be overwritten
+# by an environmental variable of the same name.
+for env_var in dir():
+    # Only check for all upper case variable names.
+    if env_var.upper() == env_var:
+        env_var_value = None
+        # See if an environmental variable has been set with the same
+        # name
+        try:
+            env_var_value = os.environ[env_var]
+        except KeyError:
+            pass
+        # If environmental variable has been set overwrite default
+        # value
+        if env_var_value is not None:
+            locals()[env_var] = env_var_value
 
 class DataLayer (object):
     """
@@ -45,7 +66,7 @@ class DataLayer (object):
         # Check mask layer is called 'mask'
         if self.layer_type == 'mask' and self.layer_name != 'mask':
             raise Exception('Mask layer must be named "mask"')
-            
+
          # Get path to layer - required for static layers
         try:
             self.layer_path = layer_dict['path']
