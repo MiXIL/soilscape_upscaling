@@ -16,7 +16,7 @@ import subprocess
 from . import upscaling_common
 
 #: Minimum time difference between date and AirMOSS scene
-MIN_TIME_DIFF_AIRMOSS = 1e10
+MIN_TIME_DIFF_AIRBORNE_SAR = 1e10
 
 UPSCALING_PROJ = upscaling_common.UPSCALING_PROJ
 UPSCALING_RES = upscaling_common.UPSCALING_RES
@@ -52,10 +52,13 @@ def get_reprojected_dynamic_layer(layer_type, layer_dir, sm_date_ts, temp_dir,
 
     """
     # Get resampling method for layer type
-    if layer_type.startswith('airmoss'):
+    if layer_type.startswith('airmoss') or layer_type.startswith('uavsar'):
         resample_method = 'average'
-    if layer_type.startswith('prism'):
+    elif layer_type.startswith('prism'):
         resample_method = 'bilinear'
+    # Using ECMWF data which has already been resampled using cubic convolution
+    elif layer_type.startswith('ecmwf'):
+        resample_method = 'near'
 
     # Get original file
     orig_layer, file_date = get_dynamic_layer(layer_type, layer_dir, sm_date_ts)
@@ -100,11 +103,18 @@ def get_dynamic_layer(layer_type, layer_dir, sm_date_ts):
             raise Exception('Could not find dynamic layer "{}"'.format(layer_type))
         else:
             return airmoss_files[polarization.upper()], file_date
-
+    # UAVSAR
+    elif layer_type.startswith('uavsar'):
+        polarization = layer_type.split('_')[-1]
+        uavsar_files, file_date = get_closest_uavsar(sm_date_ts,
+                                                     layer_dir)
+        if uavsar_files is None:
+            raise Exception('Could not find dynamic layer "{}"'.format(layer_type))
+        else:
+            return uavsar_files[polarization.upper()], file_date
     # PRISM
     elif layer_type.startswith('prism'):
         prism_var = layer_type.split('_')[-1]
-        prism_file = get_prism_data
         prism_file = get_prism_data(sm_date_ts, layer_dir,
                                     prism_var)
         if prism_file is None:
@@ -112,9 +122,17 @@ def get_dynamic_layer(layer_type, layer_dir, sm_date_ts):
         else:
             file_date = time.strftime('%Y%m%d', sm_date_ts)
             return prism_file, file_date
+    # ECMWF
+    elif layer_type.startswith('ecmwf'):
+        ecmwf_file = get_ecmwf_data(sm_date_ts, layer_dir)
+        if ecmwf_file is None:
+            raise Exception('Could not find dynamic layer "{}"'.format(layer_type))
+        else:
+            file_date = time.strftime('%Y%m%d', sm_date_ts)
+            return ecmwf_file, file_date
 
 def get_closest_airmoss(sm_date_ts, airmoss_dir,
-                        min_time_diff=MIN_TIME_DIFF_AIRMOSS):
+                        min_time_diff=MIN_TIME_DIFF_AIRBORNE_SAR):
 
     """
     Get closest AirMOSS data to date.
@@ -155,6 +173,58 @@ def get_closest_airmoss(sm_date_ts, airmoss_dir,
 
     return out_files, airmoss_date_str
 
+def get_closest_uavsar(sm_date_ts, uavsar_dir,
+                       min_time_diff=MIN_TIME_DIFF_AIRBORNE_SAR):
+
+    """
+    Get closest UAVSAR data to date.
+    Returns dictionary of files for HH, VV and HV
+    data and date.
+    """
+    out_files = None
+
+    # Convert time to s since epoch
+    sm_date_epoch = calendar.timegm(sm_date_ts)
+
+    # Get list of uavsar files
+    uavsar_file_list = glob.glob(os.path.join(uavsar_dir, '*_HHHH_*kea'))
+
+    if len(uavsar_file_list) == 0:
+        raise Exception('No UAVSAR files matching "*_HHHH_*kea" found')
+    
+    uavsar_date_str = ""
+    out_files = None
+    
+    for uavsar_file in uavsar_file_list:
+        
+        file_name = os.path.split(uavsar_file)[-1]
+
+        elements = uavsar_file.split('_')
+        uavsar_date = elements[1]
+
+        # Not sure why this is here as doesn't do anything if there aren't the expected
+        # number of files
+        numfilesforDate = len(glob.glob(os.path.join(uavsar_dir, '*{}*kea'.format(uavsar_date))))
+        if numfilesforDate < 3:
+            continue        
+
+        uavsar_date_ts = time.strptime(uavsar_date, '%y%m%d')
+        
+        uavsar_date_epoch = calendar.timegm(uavsar_date_ts)
+
+        time_diff = abs(uavsar_date_epoch - sm_date_epoch)
+
+        if time_diff < min_time_diff:
+            min_time_diff = time_diff
+            uavsar_date_str = time.strftime('%Y%m%d',uavsar_date_ts)
+            out_files = {}
+            out_files['HH'] = uavsar_file
+            out_files['VV'] = uavsar_file.replace('_HHHH_', '_VVVV_')
+            out_files['HV'] = uavsar_file.replace('_HHHH_', '_HVHV_')
+
+    return out_files, uavsar_date_str
+
+
 def get_prism_data(sm_date_ts, prism_dir,
                    prism_var, temporary_dir=None):
     """
@@ -173,4 +243,24 @@ def get_prism_data(sm_date_ts, prism_dir,
         return None
     else:
         return prism_path[0]
+
+
+def get_ecmwf_data(sm_date_ts, ecmwf_dir):
+    """
+    Get ECMWF climate data.
+
+    TODO: Currently relies on having processed data.
+    Could be improverd by taking data as it is downloaded.
+    """
+    date_str = time.strftime('%Y%m%d', sm_date_ts)
+    hour_str = time.strftime('%H', sm_date_ts)
+
+    ecmwf_search = os.path.join(ecmwf_dir,
+                                '*{0}_{1}_100m.kea'.format(date_str, hour_str))
+    ecmwf_path = glob.glob(ecmwf_search)
+    if len(ecmwf_path) == 0:
+        # This is where data could be downloaded
+        return None
+    else:
+        return ecmwf_path[0]
 
