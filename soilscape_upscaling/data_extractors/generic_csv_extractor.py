@@ -8,7 +8,6 @@ Dan Clewley & Jane Whitcomb
 """
 
 import csv
-import os
 import time
 
 class SoilSCAPECreateCSVGenericStationRowsCSV(object):
@@ -25,35 +24,54 @@ class SoilSCAPECreateCSVGenericStationRowsCSV(object):
         self.debug_mode = debug_mode
         self.station_sm_file = station_sm_file
         self.delimiter = delimiter
+        self.dates_ts = None
 
-    def get_column_for_date(self, time_ts):
+    def get_available_dates(self):
         """
-        Get column number of date matching time_ts
+        Get a list of all available dates from file
 
+        Returns as list of Python time structure objects
         """
         station_sm = open(self.station_sm_file, 'r')
         station_sm_header = station_sm.readline()
         station_sm.close()
 
+        # Remove new line
+        station_sm_header = station_sm_header.replace('\n','')
+        # Split by delimiter
         header_elements = station_sm_header.split(self.delimiter)
+        dates = header_elements[3:]
+        self.dates_ts = [time.strptime(d, '%Y-%m-%d') for d in dates]
+
+        return self.dates_ts
+ 
+    def get_column_for_date(self, time_ts):
+        """
+        Get column number of date matching time_ts
+
+        """
+
+        # If dates haven't already been extracted
+        # do so here
+        if self.dates_ts is None:
+            self.get_available_dates()
 
         dateidx = None
 
-        for i in range(3, len(header_elements)):
-            station_date_ts = time.strptime(header_elements[i], '%Y-%m-%d')
+        for i, station_date_ts in enumerate(self.dates_ts):
 
             # Check if year month and day are the same
             if station_date_ts.tm_year == time_ts.tm_year and \
                station_date_ts.tm_mon == time_ts.tm_mon and \
-               station_date_ts.tm_mday == time_ts.tm_day:
-                dateidx = i
+               station_date_ts.tm_mday == time_ts.tm_mday:
+                dateidx = i+3
                 break
 
         return dateidx
 
-    def write_out_csv(self, time_ts, output_csv_file, stations_list=None):
+    def create_csv_from_input(self, time_ts, output_csv_file, stations_list=None):
         """
-        Write out a CSV containing:
+        Create a CSV for use in upscaling code from input sensor data.
 
         siteID, Latitude, Longitude, sensorData
 
