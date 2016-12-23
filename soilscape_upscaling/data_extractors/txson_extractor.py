@@ -7,8 +7,6 @@ Dan Clewley & Jane Whitcomb
 
 """
 
-
-
 import csv
 import calendar
 import os
@@ -117,7 +115,7 @@ class SoilSCAPECreateCSVfromTxSON(object):
 
         outputText = csv.writer(open(outDataFile,'w'))
 
-        outHeader = ['physicalID', 'Latitude', 'Longitude', 'sensorData']
+        outHeader = ['siteID', 'Latitude', 'Longitude', 'sensorData']
         outputText.writerow(outHeader)
 
         for  siteIDstr in self.siteIDsList:
