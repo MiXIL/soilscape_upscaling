@@ -106,3 +106,13 @@ class DataLayer (object):
                                  ' format of YYYY-MM-DD'.format(self.layer_name))
         except KeyError:
             self.layer_date = None
+        # Check resampling method to use (only for dynamic layers)
+        # If not specified will use default for layer type
+        try:
+            self.resample_method = layer_dict['resample_method']
+            if self.layer_type != 'dynamic':
+                raise ValueError('Resample method can not be specified for'
+                                 ' static layers')
+        except KeyError:
+            self.resample_method = None
+

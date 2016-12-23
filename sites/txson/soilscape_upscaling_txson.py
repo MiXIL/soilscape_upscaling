@@ -30,11 +30,14 @@ from soilscape_upscaling.data_extractors import txson_extractor
 
 MAX_SM_COL = 0.4
 
-def py2SQLiteTime(inTimePy):
-    """ Converts Python time structure to string in the form:
-        YYYY-MM-DD hh:mm:ss
+def check_create_dir(in_dir_path):
     """
-    return time.strftime('%Y-%m-%d %H:%M:%S',inTimePy)
+    Check a directory exists and create if it doesn't
+    """
+
+    if not os.path.isdir(in_dir_path):
+        os.makedirs(in_dir_path)
+
 
 def run_scaling(outfolder, config_file, debugMode=False):   
 
@@ -58,14 +61,9 @@ def run_scaling(outfolder, config_file, debugMode=False):
     outputImageDIR = os.path.join(out_dir, 'Images')
     outputPlotsDIR = os.path.join(out_dir, 'Plots')
 
-    if os.path.isdir(out_dir):
-        print('Output directory {0} already exists'.format(out_dir))
-    else:
-        os.makedirs(out_dir)
-        os.makedirs(outputStatsDIR)
-        os.makedirs(outputCSVDIR)
-        os.makedirs(outputImageDIR)
-        os.makedirs(outputPlotsDIR)
+    # Check all directories exist
+    for script_dir in [out_dir, outputStatsDIR, outputCSVDIR, outputImageDIR, outputPlotsDIR]:
+        check_create_dir(script_dir)
 
     # Get sensor data directory
     sensor_data_dir = config['default']['sensor_data_dir']
@@ -99,7 +97,7 @@ def run_scaling(outfolder, config_file, debugMode=False):
 
     while len(nodeIDsList) < numnodes:
         node = numpy.random.choice(siteIDsList)
-        if (node not in nodeIDsList):
+        if node not in nodeIDsList:
             nodeIDsList.append(node)
             validIDsList.remove(node)     
 
@@ -121,9 +119,6 @@ def run_scaling(outfolder, config_file, debugMode=False):
     # Resolution defines the pixel size:
     upscaling_res = config['default']['upscaling_res']
 
-    # Dynamic layer resampling method:
-    dyn_resampling = config['default']['dyn_resampling']
- 
     # Set start and end time
     starttimeEpoch = calendar.timegm(starttime)
     endtimeEpoch = calendar.timegm(endtime)
@@ -149,9 +144,12 @@ def run_scaling(outfolder, config_file, debugMode=False):
     # Get a list of bandnames
     band_names = [layer.layer_name for layer in data_layers_list]
 
-    # If there is a band called 'airmoss_hh' using AirMOSS
-    useAirMOSS = 'airmoss_hh' in band_names
-    
+    # Check there aren't any duplicates
+    if len(band_names) != len(set(band_names)):
+        raise ValueError('Each band must have a unique name:\n'
+                         '{}\n were provided'.format(', '.join(band_names)))
+
+
     # Write header
     outStats.writerow(['Date','nSamples','avgSM_train','stdSM_train','avgSM_predict',
                        'stdSM_predict','RMSE','Bias','RSq','avgSM_valid','stdSM_valid','AirMOSSDate'])

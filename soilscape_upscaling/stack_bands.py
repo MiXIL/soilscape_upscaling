@@ -55,7 +55,7 @@ def set_band_names(input_image, band_names_list, print_names=False):
 
     dataset = None
 
-def make_stack(data_layers_list, out_dir, sm_date_ts=None, mask=None,
+def make_stack(data_layers_list, out_dir, sm_date_ts=None,
                bounding_box=None, out_res=UPSCALING_RES,
                out_proj=UPSCALING_PROJ):
     """
@@ -79,7 +79,10 @@ def make_stack(data_layers_list, out_dir, sm_date_ts=None, mask=None,
                                                                  data_layer.layer_dir,
                                                                  sm_date_ts,
                                                                  out_dir,
-                                                                 bounding_box)
+                                                                 bounding_box,
+                                                                 data_layer.resample_method,
+                                                                 out_res,
+                                                                 out_proj)
             if dynamic_path is not None:
                 data_layer.layer_path = dynamic_path
                 data_layer.layer_date = time.strptime(dynamic_date, '%Y%m%d')

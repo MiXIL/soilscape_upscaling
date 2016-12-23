@@ -32,6 +32,7 @@ else:
 
 def get_reprojected_dynamic_layer(layer_type, layer_dir, sm_date_ts, temp_dir,
                                   bounding_box=None,
+                                  resample_method=None,
                                   out_res=UPSCALING_RES,
                                   out_proj=UPSCALING_PROJ):
     """
@@ -45,20 +46,24 @@ def get_reprojected_dynamic_layer(layer_type, layer_dir, sm_date_ts, temp_dir,
     * sm_date_ts - date of soil moisture - Python time stamp format
     * temp_dir - directory to save reprojected data to
     * bounding_box - bounding box to subset to
+    * resample_method - method to use for resampling
+    * out_res - output resolution of data
+    * out_proj - output projection of data
 
     Returns:
 
     * Path to reprojected layer and date of dynamic layer (string)
 
     """
-    # Get resampling method for layer type
-    if layer_type.startswith('airmoss') or layer_type.startswith('uavsar'):
-        resample_method = 'average'
-    elif layer_type.startswith('prism'):
-        resample_method = 'bilinear'
-    # Using ECMWF data which has already been resampled using cubic convolution
-    elif layer_type.startswith('ecmwf'):
-        resample_method = 'near'
+    if resample_method is None:
+        # Get resampling method for layer type
+        if layer_type.startswith('airmoss') or layer_type.startswith('uavsar'):
+            resample_method = 'average'
+        elif layer_type.startswith('prism'):
+            resample_method = 'bilinear'
+        # Using ECMWF data which has already been resampled using cubic convolution
+        elif layer_type.startswith('ecmwf'):
+            resample_method = 'near'
 
     # Get original file
     orig_layer, file_date = get_dynamic_layer(layer_type, layer_dir, sm_date_ts)
