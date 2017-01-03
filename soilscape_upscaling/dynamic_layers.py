@@ -61,9 +61,8 @@ def get_reprojected_dynamic_layer(layer_type, layer_dir, sm_date_ts, temp_dir,
             resample_method = 'average'
         elif layer_type.startswith('prism'):
             resample_method = 'bilinear'
-        # Using ECMWF data which has already been resampled using cubic convolution
         elif layer_type.startswith('ecmwf'):
-            resample_method = 'near'
+            resample_method = 'cubic'
 
     # Get original file
     orig_layer, file_date = get_dynamic_layer(layer_type, layer_dir, sm_date_ts)
