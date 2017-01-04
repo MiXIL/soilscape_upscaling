@@ -87,29 +87,38 @@ def run_scaling(outfolder, config_file, debugMode=False):
     predictSpacingDays = config['default']['predict_spacing_days']
 
     # List of TxSON site IDs:
-    siteIDsList = config['default']['site_ids'].split()
-    # Number of nodes to use in Random Forests upscaling (others will be used for validation):
-    numnodes = int(config['default']['num_nodes'])
-    print('numnodes: ',numnodes)
+    all_sites_list = config['default']['site_ids'].split()
 
-    nodeIDsList = []
-    validIDsList = siteIDsList.copy()
+    num_train_sites = int(config['default']['num_train_sites'])
+    num_val_sites = int(config['default']['num_val_sites'])
 
-    while len(nodeIDsList) < numnodes:
-        node = numpy.random.choice(siteIDsList)
-        if node not in nodeIDsList:
-            nodeIDsList.append(node)
-            validIDsList.remove(node)     
+    if num_train_sites + num_val_sites > len(all_sites_list):
+        raise Exception('The number of training and validation nodes must'
+                        ' be less than the total number of nodes')
 
-    print('len_nodelist: {0}, len_validlist: {1}'.format(len(nodeIDsList),len(validIDsList)))
+    # Split into training and testing data by putting input list of sites in
+    # a random order then taking ones at the start for training and ones
+    # at the end for validation
+    numpy.random.shuffle(all_sites_list)
+
+    train_site_ids_list = all_sites_list[:num_train_sites]
+    validation_site_ids_list = all_sites_list[(-1*num_val_sites):]
+
+    # Sort back into order (will spped up site selection later)
+    train_site_ids_list = numpy.sort(train_site_ids_list)
+    validation_site_ids_list = numpy.sort(validation_site_ids_list)
+
+    print('Number of training nodes: {0}, '
+          'Number of validation nodes: {1}'.format(len(train_site_ids_list),
+                                                   len(validation_site_ids_list)))
  
     # Which sensor in the vertical stack of sensors at each site (e.g., sensor 1 is at 5 cm depth):
     sensorNum = int(config['default']['sensor_number']) 
 
-    csv_extractor = txson_extractor.SoilSCAPECreateCSVfromTxSON(nodeIDsList, sensor_data_dir,
+    csv_extractor = txson_extractor.SoilSCAPECreateCSVfromTxSON(train_site_ids_list, sensor_data_dir,
                                                                 outSensorNum=sensorNum,
                                                                 debugMode=debugMode)
-    valid_extractor = txson_extractor.SoilSCAPECreateCSVfromTxSON(validIDsList, sensor_data_dir,
+    valid_extractor = txson_extractor.SoilSCAPECreateCSVfromTxSON(validation_site_ids_list, sensor_data_dir,
                                                                   outSensorNum=sensorNum,
                                                                   debugMode=debugMode)
 
@@ -135,7 +144,7 @@ def run_scaling(outfolder, config_file, debugMode=False):
     outVarImportance = csv.writer(outVarImportanceHandler)
     outVarImportancHeader = False
 
-    # Get a list of data layers - to check if using AirMOSS
+    # Get a list of data layers
     data_layers_list = []
     for section in config.sections():
         if section.startswith('layer'):
@@ -170,8 +179,6 @@ def run_scaling(outfolder, config_file, debugMode=False):
 
         nOutRecords = csv_extractor.createCSVFromTxSON(nodeDataCSV,startTS,endTS)
         if nOutRecords >= 10:
-            print('date: ',dateStr)
-            print('noutrec: ',nOutRecords)
             try:
                 print("***** {} *****".format(dateStr))
 
@@ -200,9 +207,8 @@ def run_scaling(outfolder, config_file, debugMode=False):
     
                 rfPar = rf_upscaling.run_random_forests(statscsv, data_stack, outSMimage, data_layers_list)
 
-                validDataCSV = os.path.join(outputStatsDIR, "{}_valid_data.csv".format(outBaseName))
+                validDataCSV = os.path.join(outputCSVDIR, "{}_valid_data.csv".format(outBaseName))
                 nValidRecords = valid_extractor.createCSVFromTxSON(validDataCSV,startTS,endTS)
-                print('nvalidrec: ',nValidRecords)
 
                 validdata = pandas.read_csv(validDataCSV)
                 validSMs = validdata.sensorData
