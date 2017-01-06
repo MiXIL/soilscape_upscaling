@@ -178,77 +178,76 @@ def run_scaling(outfolder, config_file, debugMode=False):
         nodeDataCSV = os.path.join(tempDIR, "{}_node_data.csv".format(outBaseName))
 
         nOutRecords = csv_extractor.createCSVFromTxSON(nodeDataCSV,startTS,endTS)
-        if nOutRecords >= 10:
-            try:
-                print("***** {} *****".format(dateStr))
+        try:
+            print("***** {} *****".format(dateStr))
 
-                data_layers_list = []
-                for section in config.sections():
-                    if section.startswith('layer'):
-                        data_layers_list.append(upscaling_common.DataLayer(config[section]))
-                
-                data_layers_list.append(upscaling_common.DataLayer(config['mask']))
-                
-                # Create band stack 
-                data_stack = stack_bands.make_stack(data_layers_list, tempDIR,
-                                                    startTS, bounding_box=bounding_box, out_res=upscaling_res)
+            data_layers_list = []
+            for section in config.sections():
+                if section.startswith('layer'):
+                    data_layers_list.append(upscaling_common.DataLayer(config[section]))
+            
+            data_layers_list.append(upscaling_common.DataLayer(config['mask']))
+            
+            # Create band stack 
+            data_stack = stack_bands.make_stack(data_layers_list, tempDIR,
+                                                startTS, bounding_box=bounding_box, out_res=upscaling_res)
 
-                # Don't need this for TxSON
-                airmossDateStr = "NA"
+            # Don't need this for TxSON
+            airmossDateStr = "NA"
 
-                # Extract pixel vals
-                statscsv = os.path.join(outputCSVDIR, outBaseName + '_sensor_data.csv')
-                extract_image_stats.extract_layer_stats_csv(nodeDataCSV,
-                                                            statscsv,
-                                                            data_layers_list, data_stack)
-                # Run Random Forests
-                outSMimage = os.path.join(outputImageDIR, outBaseName + '_predict_sm.kea')
-                outSMColimage = os.path.join(outputImageDIR, outBaseName + '_predict_sm_col.tif')
+            # Extract pixel vals
+            statscsv = os.path.join(outputCSVDIR, outBaseName + '_sensor_data.csv')
+            extract_image_stats.extract_layer_stats_csv(nodeDataCSV,
+                                                        statscsv,
+                                                        data_layers_list, data_stack)
+            # Run Random Forests
+            outSMimage = os.path.join(outputImageDIR, outBaseName + '_predict_sm.kea')
+            outSMColimage = os.path.join(outputImageDIR, outBaseName + '_predict_sm_col.tif')
     
-                rfPar = rf_upscaling.run_random_forests(statscsv, data_stack, outSMimage, data_layers_list)
+            rfPar = rf_upscaling.run_random_forests(statscsv, data_stack, outSMimage, data_layers_list)
 
-                validDataCSV = os.path.join(outputCSVDIR, "{}_valid_data.csv".format(outBaseName))
-                nValidRecords = valid_extractor.createCSVFromTxSON(validDataCSV,startTS,endTS)
+            validDataCSV = os.path.join(outputCSVDIR, "{}_valid_data.csv".format(outBaseName))
+            nValidRecords = valid_extractor.createCSVFromTxSON(validDataCSV,startTS,endTS)
 
-                validdata = pandas.read_csv(validDataCSV)
-                validSMs = validdata.sensorData
-                if (len(validSMs) == 0):
-                    raise Exception('No valid training data found')
-                avgSMvalid = numpy.nanmean(validSMs)
-                stdSMvalid = numpy.nanstd(validSMs)
+            validdata = pandas.read_csv(validDataCSV)
+            validSMs = validdata.sensorData
+            if (len(validSMs) == 0):
+                raise Exception('No valid training data found')
+            avgSMvalid = numpy.nanmean(validSMs)
+            stdSMvalid = numpy.nanstd(validSMs)
         
-                # Write out stats
-                outRow = [outBaseName,
-                          rfPar['nSamples'],
-                          rfPar['averageSMTrain'],
-                          rfPar['sdSMTrain'],
-                          rfPar['averageSMPredict'],
-                          rfPar['sdSMPredict'],
-                          rfPar['RMSE'],
-                          rfPar['Bias'],
-                          rfPar['RSq'],
-                          avgSMvalid,
-                          stdSMvalid,
-                          airmossDateStr]
-                outStats.writerow(outRow)
+            # Write out stats
+            outRow = [outBaseName,
+                      rfPar['nSamples'],
+                      rfPar['averageSMTrain'],
+                      rfPar['sdSMTrain'],
+                      rfPar['averageSMPredict'],
+                      rfPar['sdSMPredict'],
+                      rfPar['RMSE'],
+                      rfPar['Bias'],
+                      rfPar['RSq'],
+                      avgSMvalid,
+                      stdSMvalid,
+                      airmossDateStr]
+            outStats.writerow(outRow)
     
-                # Write header for first record
-                if not outVarImportancHeader:
-                    outVarImportance.writerow(rfPar['varNames'])
-                    outVarImportancHeader = True
+            # Write header for first record
+            if not outVarImportancHeader:
+                outVarImportance.writerow(rfPar['varNames'])
+                outVarImportancHeader = True
     
-                outVarImportance.writerow(rfPar['varImportance'])
+            outVarImportance.writerow(rfPar['varImportance'])
     
-                if createColImage:
-                    upscaling_utilities.colour_sm_image(outSMimage, outSMColimage,
-                                                        max_value=MAX_SM_COL)
+            if createColImage:
+                upscaling_utilities.colour_sm_image(outSMimage, outSMColimage,
+                                                    max_value=MAX_SM_COL)
 
-            except Exception as err:
-                if debugMode:
-                    shutil.rmtree(tempDIR)
-                    raise
-                else:
-                    print(err)
+        except Exception as err:
+            if debugMode:
+                shutil.rmtree(tempDIR)
+                raise
+            else:
+                print(err)
 
         # Remove temp files
         shutil.rmtree(tempDIR)
