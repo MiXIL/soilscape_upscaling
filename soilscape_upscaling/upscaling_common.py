@@ -7,6 +7,7 @@ Common functions and constants.
 
 """
 
+import configparser
 import time
 import os
 
@@ -93,7 +94,7 @@ class DataLayer (object):
                              ', got {}'.format(layer_dict['nodata']))
         # Check if we want to use the layer
         try:
-            self.use_layer = layer_dict['uselayer']
+            self.use_layer = configparser.ConfigParser().BOOLEAN_STATES[layer_dict['uselayer']]
         except KeyError:
             self.use_layer = True
         # Get date for layer

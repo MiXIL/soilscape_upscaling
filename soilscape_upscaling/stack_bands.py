@@ -68,9 +68,7 @@ def make_stack(data_layers_list, out_dir, sm_date_ts=None,
     out_raster = os.path.join(out_dir, 'upscaling_layers_stack_ease.{}'.format(GDAL_EXT))
 
     for data_layer in data_layers_list:
-        # For dynamic layers check we have the path
-        # if we don't find and subset the layer
-        if data_layer.layer_type == 'dynamic' and data_layer.layer_path is None:
+        if data_layer.layer_type == 'dynamic':
             if sm_date_ts is None:
                 raise Exception('Dynamic layers were specified but no date'
                                 'was provided')
@@ -83,9 +81,8 @@ def make_stack(data_layers_list, out_dir, sm_date_ts=None,
                                                                  data_layer.resample_method,
                                                                  out_res,
                                                                  out_proj)
-            if dynamic_path is not None:
-                data_layer.layer_path = dynamic_path
-                data_layer.layer_date = time.strptime(dynamic_date, '%Y%m%d')
+            data_layer.layer_path = dynamic_path
+            data_layer.layer_date = time.strptime(dynamic_date, '%Y%m%d')
 
     # Extract list of band names and layer paths
     band_names = [layer.layer_name for layer in data_layers_list]

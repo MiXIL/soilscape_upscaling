@@ -89,10 +89,15 @@ def run_scaling(config_file, debug_mode=False):
     data_layers_list = []
     for section in config.sections():
         if section.startswith('layer'):
-            data_layers_list.append(upscaling_common.DataLayer(config[section]))
+            data_layer = upscaling_common.DataLayer(config[section])
+            if data_layer.use_layer:
+                data_layers_list.append(data_layer)
 
     # Get a list of bandnames
     band_names = [layer.layer_name for layer in data_layers_list]
+
+    # Add mask 
+    data_layers_list.append(upscaling_common.DataLayer(config['mask']))
 
     # Check there aren't any duplicates
     if len(band_names) != len(set(band_names)):
@@ -126,12 +131,7 @@ def run_scaling(config_file, debug_mode=False):
 
         try:
             print("***** {} *****".format(date_str))
-
-            data_layers_list = []
-            for section in config.sections():
-                if section.startswith('layer'):
-                    data_layers_list.append(upscaling_common.DataLayer(config[section]))
-
+            # Add mask 
             data_layers_list.append(upscaling_common.DataLayer(config['mask']))
 
             # Create band stack
