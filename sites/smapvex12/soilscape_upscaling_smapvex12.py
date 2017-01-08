@@ -131,8 +131,6 @@ def run_scaling(config_file, debug_mode=False):
 
         try:
             print("***** {} *****".format(date_str))
-            # Add mask 
-            data_layers_list.append(upscaling_common.DataLayer(config['mask']))
 
             # Create band stack
             data_stack = stack_bands.make_stack(data_layers_list, temp_dir,
