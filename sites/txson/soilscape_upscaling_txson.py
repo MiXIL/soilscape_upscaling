@@ -53,8 +53,6 @@ def run_scaling(outfolder, config_file, debugMode=False):
     config = configparser.ConfigParser()
     config.read(config_file)
 
-    createColImage = True
-
     out_dir = os.path.join(config['default']['outdir'], outfolder)
     outputStatsDIR = os.path.join(out_dir, 'Stats')
     outputCSVDIR = os.path.join(out_dir, 'CSV')
@@ -67,6 +65,9 @@ def run_scaling(outfolder, config_file, debugMode=False):
 
     # Get sensor data directory
     sensor_data_dir = config['default']['sensor_data_dir']
+
+    # Check if a colour image should be created.
+    createColImage = config.getboolean('default', 'colour_image')
 
     # Get start and end time
     starttime_str = config['default']['starttime']

@@ -111,6 +111,7 @@ def apply_rf_image(in_data_stack, out_image, rf_model, nodata_vals):
     otherargs.nodata_vals_list = nodata_vals
     controls = applier.ApplierControls()
     controls.setOutputDriverName(upscaling_utilities.get_gdal_format(out_image))
+    controls.setCalcStats(False)
     controls.progress = cuiprogress.CUIProgressBar()
     applier.apply(_rios_apply_rf_image, infiles, outfiles,
                   otherargs, controls=controls)
