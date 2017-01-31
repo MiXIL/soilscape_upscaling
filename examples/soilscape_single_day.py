@@ -24,7 +24,9 @@ upscaled_image = os.path.join(out_dir, 'upscaled_sm_image.kea')
 data_layers_list = []
 for section in config.sections():
     if section.startswith('layer'):
-        data_layers_list.append(upscaling_common.DataLayer(config[section]))
+        data_layer = upscaling_common.DataLayer(config[section])
+        if data_layer.use_layer:
+            data_layers_list.append(data_layer)
 
 data_layers_list.append(upscaling_common.DataLayer(config['mask']))
 
@@ -36,7 +38,7 @@ data_stack = stack_bands.make_stack(data_layers_list, out_dir,
 
 # 3. Extract stats
 extract_image_stats.extract_layer_stats_csv('soilscape_sensor_data.csv', extracted_stats,
-                                        data_layers_list, data_stack)
+                                            data_layers_list, data_stack)
 
 # 4. Run Random Forests
 upscaling_out_dict = rf_upscaling.run_random_forests(extracted_stats, data_stack,
