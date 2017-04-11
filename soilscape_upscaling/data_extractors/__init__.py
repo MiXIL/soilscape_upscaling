@@ -7,6 +7,9 @@ go here.
 
 Dan Clewley & Jane Whitcomb
 
+This file is licensed under the GPL v3 Licence. A copy of this
+licence is available to download with this file.
+
 """
 
 from . import soilscape_db_extractor

@@ -5,6 +5,9 @@ Classes to extract data from CSV files.
 
 Dan Clewley & Jane Whitcomb
 
+This file is licensed under the GPL v3 Licence. A copy of this
+licence is available to download with this file.
+
 """
 
 import csv

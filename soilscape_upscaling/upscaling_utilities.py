@@ -5,6 +5,10 @@ SoilSCAPE Random Forests upscaling code.
 Dan Clewley & Jane Whitcomb
 
 General purpose utilities
+
+This file is licensed under the GPL v3 Licence. A copy of this
+licence is available to download with this file.
+
 """
 
 import subprocess

@@ -1,11 +1,14 @@
 #!/usr/bin/env python
 
-################################################################
-# Python script to create CSV from soil moisture measurements  #
-# Dan Clewley (daniel.clewley@gmail.com), 27/08/2012           #
-#                                                              #
-# Modified 11/11/2013 to use sqlite                            #
-################################################################
+"""
+Python script to create CSV from soil moisture measurements
+Dan Clewley (daniel.clewley@gmail.com), 27/08/2012 
+
+Modified 11/11/2013 to use sqlite                            
+
+This file is licensed under the GPL v3 Licence. A copy of this
+licence is available to download with this file.
+"""
 
 import csv
 import os

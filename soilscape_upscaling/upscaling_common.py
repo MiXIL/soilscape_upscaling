@@ -5,6 +5,9 @@ Dan Clewley & Jane Whitcomb
 
 Common functions and constants.
 
+This file is licensed under the GPL v3 Licence. A copy of this
+licence is available to download with this file.
+
 """
 
 import configparser
