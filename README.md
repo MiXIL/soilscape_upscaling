@@ -6,6 +6,9 @@ Clewley, D., Whitcomb, J., Akbar, R., Silva, Berg, A., Adams, J.R., Caldwell, T.
 
 Developed as part of the SoilSCAPE project and supported by a grant from the National Aeronautics and Space Administration, Earth Science Technology Office, Advanced Information Systems Technologies program.
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.556203.svg)](https://doi.org/10.5281/zenodo.556203)
+
+
 ## Installation ##
 
 ### Pre-requisites ###
