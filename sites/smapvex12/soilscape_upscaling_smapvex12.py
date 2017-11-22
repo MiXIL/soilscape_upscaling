@@ -44,6 +44,10 @@ def run_scaling(config_file, debug_mode=False):
     
     """
 
+    if not os.path.isfile(config_file):
+        raise Exception('The config file {} does not exist, '
+                        'please check path'.format(config_file))
+
     config = configparser.ConfigParser()
     config.read(config_file)
 
