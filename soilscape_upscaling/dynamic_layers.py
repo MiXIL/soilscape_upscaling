@@ -206,7 +206,7 @@ def get_closest_uavsar(sm_date_ts, uavsar_dir,
         
         file_name = os.path.split(uavsar_file)[-1]
 
-        elements = uavsar_file.split('_')
+        elements = file_name.split('_')
         uavsar_date = elements[1]
 
         # Not sure why this is here as doesn't do anything if there aren't the expected
