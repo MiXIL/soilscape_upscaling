@@ -17,10 +17,6 @@ import os
 import shutil
 import tempfile
 import collections
-import rsgislib
-from rsgislib import imagecalc
-from rsgislib.imagecalc import BandDefn
-from rsgislib import rastergis
 
 def get_gdal_format(file_name):
     """ Get GDAL format, based on filename """
@@ -45,12 +41,20 @@ def colour_SM_image(inimage, colourimage, max_value=0.5, band=1):
     Colour image 
 
     """
+    try:
+        import rsgislib
+        from rsgislib import imagecalc
+        from rsgislib.imagecalc import BandDefn
+        from rsgislib import rastergis
+    except ImportError:
+        raise ImportError("Could not import RSGISLib, required"
+                          " to colour image")
 
     if max_value == 0.5:
         
         # Add class field:
         bandDefns = []
-        bandDefns.append(BandDefn('SM',inimage,1))
+        bandDefns.append(BandDefn('SM',inimage, band))
 
         expression = []
         expression.append('0.00')
@@ -70,9 +74,10 @@ def colour_SM_image(inimage, colourimage, max_value=0.5, band=1):
 
         temp_dir = tempfile.mkdtemp(prefix='soilscape_upscaling')
         colourbase = os.path.basename(colourimage)
+        colourbase, colourext = os.path.splitext(colourbase)
         colour = []
         for i in range(11):
-            colour.append(os.path.join(temp_dir,colourbase.replace('.kea',str(i)+'.kea')))
+            colour.append(os.path.join(temp_dir, "{}_{}{}".format(colourbase, i+1, colourext)))
             imagecalc.bandMath(colour[i], expression[i], gdalformat, datatype, bandDefns)
 
         bandDefns = []
@@ -83,7 +88,6 @@ def colour_SM_image(inimage, colourimage, max_value=0.5, band=1):
                 expression = SMclass
             else:
                 expression = expression+'+'+SMclass
-        print('expression: ',expression)
         imagecalc.bandMath(colourimage, expression, gdalformat, datatype, bandDefns)   
     
         shutil.rmtree(temp_dir)
@@ -112,29 +116,8 @@ def colour_SM_image(inimage, colourimage, max_value=0.5, band=1):
         classcolours[8] = colourCat(red=116, green=173, blue=209, alpha=255)
         classcolours[9] = colourCat(red=69, green=117, blue=180, alpha=255)
         classcolours[10] = colourCat(red=49, green=54, blue=149, alpha=255)
-        rastergis.colourClasses(colourimage,field,classcolours)
+        rastergis.colourClasses(colourimage, field, classcolours)
 
     else:
         raise ValueError('Failed to find colours for specified max_value')
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
