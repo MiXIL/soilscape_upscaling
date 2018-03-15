@@ -11,4 +11,4 @@ setup(name='soilscape_upscaling',
                   'using Random Forests',
       author='Daniel Clewley and Jane Whitcomb',
       url='http://soilscape.usc.edu/',
-      packages=['soilscape_upscaling'])
+      packages=['soilscape_upscaling', 'soilscape_upscaling.data_extractors'])
