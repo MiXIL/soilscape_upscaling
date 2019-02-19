@@ -2,7 +2,7 @@
 
 Code for upscaling soil moisture with Random Forests regression. Implements the method described in the following paper:
 
-Clewley, D., Whitcomb, J., Akbar, R., Silva, Berg, A., Adams, J.R., Caldwell, T., Entekhabi, D., and Moghaddam, M. (2017).  A method for up-scaling _in situ_ soil moisture measurements to satellite footprint scale using random forests. IEEE Journal of Selected Topics in Applied Earth Observation and Remote Sensing. http://doi.org/10.1109/JSTARS.2017.2690220 ([pre print](http://plymsea.ac.uk/8130/1/clewley_et_al_upscaling_soil_moisture_2017_pre_print.pdf)
+Clewley, D., Whitcomb, J., Akbar, R., Silva, Berg, A., Adams, J.R., Caldwell, T., Entekhabi, D., and Moghaddam, M. (2017).  A method for up-scaling _in situ_ soil moisture measurements to satellite footprint scale using random forests. IEEE Journal of Selected Topics in Applied Earth Observation and Remote Sensing. http://doi.org/10.1109/JSTARS.2017.2690220 ([pre print](http://plymsea.ac.uk/8130/1/clewley_et_al_upscaling_soil_moisture_2017_pre_print.pdf)).
 
 Developed as part of the SoilSCAPE project and supported by a grant from the National Aeronautics and Space Administration, Earth Science Technology Office, Advanced Information Systems Technologies program.
 
